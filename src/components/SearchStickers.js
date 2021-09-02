@@ -8,14 +8,15 @@ class TrendingStickers extends Component {
             photos: [],
             loading: false,
             page: 1,
-            query: '',
+            query: null,
+            search: '',
             prevY: 0
         }
     }
 
     componentDidMount() {
-        this.getPhotos(this.state.page);
-        console.log("Photos State: ", this.state.photos);
+        // this.getPhotos(this.state.page);
+        this.querySearch(this.state.query, this.state.page)
 
         var options = {
           root: null,
@@ -30,8 +31,7 @@ class TrendingStickers extends Component {
         this.observer.observe(this.loadingRef);
     }
 
-    querySearch(e) {
-        e.preventDefault();
+    async querySearch(queryString, page) {
 
         this.setState({ loading: true });
         let config = {
@@ -40,13 +40,18 @@ class TrendingStickers extends Component {
             }
         }
 
-        axios
-            .get(`/v1/search?userId=9937&q=${this.state.query}&lang=en&pageNumber=1&limit=20`, config)
-            .then(res => {
-            console.log("Photos State: ", res.data.body.stickerList);
-            this.setState({ photos: [...this.state.photos, ...res.data.body.stickerList] });
-            this.setState({ loading: false });
-        });
+        if (queryString !== null) {
+            await axios
+                .get(`/v1/search?userId=9937&q=${queryString}&lang=en&pageNumber=${page}&limit=10`, config)
+                .then(res => {
+                    console.log('photos: ', res.data.body.stickerList);
+                if (res.data.body.stickerList !== null) {
+                    this.setState({ photos:  [...this.state.photos, ...res.data.body.stickerList]});
+                    this.setState({ loading: false });
+                }
+
+            });
+        }
 
     }
 
@@ -62,7 +67,7 @@ class TrendingStickers extends Component {
         axios
           .get(`/v1/search?userId=9937&q=${this.state.query}&lang=en&pageNumber=${page}&limit=20`, config)
           .then(res => {
-            console.log("Photos State: ", res.data.body.stickerList);
+            console.log("Photos State aaaaah: ", res.data.body.stickerList);
             this.setState({ photos: [...this.state.photos, ...res.data.body.stickerList] });
             this.setState({ loading: false });
           });
@@ -71,10 +76,9 @@ class TrendingStickers extends Component {
       handleObserver(entities, observer) {
         const y = entities[0].boundingClientRect.y;
         if (this.state.prevY > y) {
-          const lastPhoto = this.state.photos[this.state.photos.length - 1];
-        //   const curPage = lastPhoto.packageId;
-          this.getPhotos(this.state.page + 1);
-          this.setState({ page: this.state.page + 1 });
+
+        this.querySearch(this.state.query, this.state.page + 1);
+        this.setState({ page: this.state.page + 1 });
         }
         this.setState({ prevY: y });
       }
@@ -89,10 +93,9 @@ class TrendingStickers extends Component {
                     type="text"
                     id="search"
                     placeholder="search stickers"
-                    onChange={(e) => this.setState({query: e.target.value})}
+                    onChange={(e) => [this.setState({query: e.target.value}), this.querySearch(e.target.value)]}
                     value={this.state.query}
                 />
-                <button onSubmit={() => this.querySearch()}></button>
             </form>
         )
     }
@@ -117,18 +120,32 @@ class TrendingStickers extends Component {
                 }}
             >
                 {this.searchBar()}
-
-                <div style={{ minHeight: "100px" }}>
-                    {this.state.photos.map(user => (
-                        <img src={user.stickerImg} height="100px" width="100px" />
-                        ))}
-                </div>
-                <div
-                    ref={loadingRef => (this.loadingRef = loadingRef)}
-                    style={loadingCSS}
-                >
-                    <span style={loadingTextCSS}>Loading...</span>
-                </div>
+                { this.state.query ?
+                        <div>
+                            <div style={{ minHeight: "100px" }}>
+                                {this.state.photos && this.state.photos.map(user => (
+                                    <img src={user.stickerImg} height="100px" width="100px" />
+                                    ))}
+                            </div>
+                            <div>
+                                <div
+                                    ref={loadingRef => (this.loadingRef = loadingRef)}
+                                    style={loadingCSS}
+                                >
+                                    <span style={loadingTextCSS}>Loading...</span>
+                                </div>
+                            </div>     
+                        </div>
+                    :
+                        <div>
+                            <div
+                                ref={loadingRef => (this.loadingRef = loadingRef)}
+                                style={loadingCSS}
+                            >
+                                <span style={loadingTextCSS}>Loading...</span>
+                            </div>
+                        </div>                
+                    }
             </div>
         );
     }
