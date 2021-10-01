@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import axios from 'axios';
+import InfiniteScroll from 'react-infinite-scroller';
 
 class TrendingStickers extends Component {
     constructor() {
@@ -10,11 +11,12 @@ class TrendingStickers extends Component {
             page: 1,
             prevY: 0
         }
+        this.handleObserver = this.handleObserver.bind(this);
     }
 
     componentDidMount() {
         this.getPhotos(this.state.page);
-        console.log("Photos State: ", this.state.photos);
+        console.log('page: ', this.state.page);
 
         var options = {
           root: null,
@@ -22,15 +24,16 @@ class TrendingStickers extends Component {
           threshold: 1.0
         };
         
-        this.observer = new IntersectionObserver(
-          this.handleObserver.bind(this),
-          options
-        );
-        this.observer.observe(this.loadingRef);
+        // this.observer = new IntersectionObserver(
+        //   this.handleObserver.bind(this),
+        //   options
+        // );
+        // this.observer.observe(this.loadingRef);
     }
 
     getPhotos(page) {
-        this.setState({ loading: true });
+        this.setState({ loading: true});
+        console.log('page: ', page);
         let config = {
             headers: {
                 apiKey: '823bb74a52fb44f8590c87b3dfd8c4e8'
@@ -41,33 +44,30 @@ class TrendingStickers extends Component {
         //   .get(`/v1/search?userId=9937&q=cute&lang=en&pageNumber=${page}&limit=20`, config)
         .get(`/v1/package?userId=9937&pageNumber=${page}&lang=en&countryCode=US&limit=10`, config)
           .then(res => {
-            console.log("Photos State: ", res.data.body.packageList);
             this.setState({ photos: [...this.state.photos, ...res.data.body.packageList] });
             this.setState({ loading: false });
           });
       }
 
-      handleObserver(entities, observer) {
-        const y = entities[0].boundingClientRect.y;
-        if (this.state.prevY > y) {
-          const lastPhoto = this.state.photos[this.state.photos.length - 1];
-          const curPage = lastPhoto.packageId;
-          this.getPhotos(this.state.page + 1);
-          this.setState({ page: this.state.page + 1 });
+    handleObserver(page) {
+        console.log('AAAAH');
+        this.setState({page: page + 1})
+        let config = {
+            headers: {
+                apiKey: '823bb74a52fb44f8590c87b3dfd8c4e8'
+            }
         }
-        this.setState({ prevY: y });
-      }
+
+        axios
+        .get(`/v1/package?userId=9937&pageNumber=${this.state.page}&lang=en&countryCode=US&limit=10`, config)
+          .then(res => {
+            this.setState({ photos: [...this.state.photos, ...res.data.body.packageList] });
+            this.setState({ loading: false });
+          });
+        
+    }
 
     render() {
-        // Additional css
-        const loadingCSS = {
-            height: "100px",
-            margin: "30px"
-        };
-    
-        // To change the loading icon behavior
-        const loadingTextCSS = { display: this.state.loading ? "block" : "none" };
-    
         return (
             <div 
                 style={{
@@ -76,17 +76,30 @@ class TrendingStickers extends Component {
                     overflow: 'scroll'
                 }}
             >
-                <div style={{ minHeight: "100px" }}>
+                <InfiniteScroll
+                    pageStart={0}
+                    loadMore={() => this.handleObserver}
+                    hasMore={true || false}
+                    loader={<div className="loader" key={0}>Loading ...</div>}
+
+                >
+                    <div style={{ minHeight: "100px" }}>
+                        {this.state.photos.map(user => (
+                            <img src={user.packageImg} height="100px" width="100px" />
+                        ))}
+                    </div>
+                </InfiniteScroll>
+                {/* <div style={{ minHeight: "100px" }}>
                     {this.state.photos.map(user => (
                         <img src={user.packageImg} height="100px" width="100px" />
                     ))}
-                </div>
-                <div
+                </div> */}
+                {/* <div
                     ref={loadingRef => (this.loadingRef = loadingRef)}
                     style={loadingCSS}
                 >
                     <span style={loadingTextCSS}>Loading...</span>
-                </div>
+                </div> */}
             </div>
         );
     }

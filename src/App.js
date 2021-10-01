@@ -41,7 +41,7 @@ function App() {
   function Home() {
     return (
       <div>
-        Main!
+        Home
       </div>
     );
   }
