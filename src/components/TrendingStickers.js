@@ -1,95 +1,60 @@
 import React, { Component } from 'react';
 import axios from 'axios';
+import styled from 'styled-components'
 
-class TrendingStickers extends Component {
-    constructor() {
-        super();
-        this.state = {
-            photos: [],
-            loading: false,
-            page: 1,
-            prevY: 0
-        }
-    }
+const TrendingStickerContainer = styled.div`
+    width: 100%;
+    height: 70vh;
+    overflow: scroll;
+    position: absolute;
+    top: 20%;
+`;
 
-    componentDidMount() {
-        this.getPhotos(this.state.page);
-        console.log("Photos State: ", this.state.photos);
+function TrendingStickers() {
+    const [photos, setPhotos] = React.useState([]);
+    const [page, setPage] = React.useState(1);
+    const [bottom, setBottom] = React.useState(false);
 
-        var options = {
-          root: null,
-          rootMargin: "0px",
-          threshold: 1.0
-        };
-        
-        this.observer = new IntersectionObserver(
-          this.handleObserver.bind(this),
-          options
-        );
-        this.observer.observe(this.loadingRef);
-    }
+    React.useEffect(() => {
+        getPhotos(page);
+    }, []) 
 
-    getPhotos(page) {
-        this.setState({ loading: true });
+    const getPhotos = (page) =>  {
+        console.log('nooo')
         let config = {
             headers: {
                 apiKey: '823bb74a52fb44f8590c87b3dfd8c4e8'
             }
         }
-
+        if (bottom === true) {
+            setPage(page + 1);
+        }
         axios
-        //   .get(`/v1/search?userId=9937&q=cute&lang=en&pageNumber=${page}&limit=20`, config)
-        .get(`/v1/package?userId=9937&pageNumber=${page}&lang=en&countryCode=US&limit=10`, config)
+        .get(`/v1/package?userId=9937&pageNumber=${page}&lang=en&countryCode=US`, config)
           .then(res => {
-            console.log("Photos State: ", res.data.body.packageList);
-            this.setState({ photos: [...this.state.photos, ...res.data.body.packageList] });
-            this.setState({ loading: false });
+            setPhotos([...photos, ...res.data.body.packageList]);
           });
       }
 
-      handleObserver(entities, observer) {
-        const y = entities[0].boundingClientRect.y;
-        if (this.state.prevY > y) {
-          const lastPhoto = this.state.photos[this.state.photos.length - 1];
-          const curPage = lastPhoto.packageId;
-          this.getPhotos(this.state.page + 1);
-          this.setState({ page: this.state.page + 1 });
+    const handleScroll = (e) => {
+        const bottom = e.target.scrollHeight - e.target.scrollTop === e.target.clientHeight;
+        setBottom(true);
+        if (bottom) {
+            getPhotos(page);
+            setBottom(false);
         }
-        this.setState({ prevY: y });
-      }
-
-    render() {
-        // Additional css
-        const loadingCSS = {
-            height: "100px",
-            margin: "30px"
-        };
-    
-        // To change the loading icon behavior
-        const loadingTextCSS = { display: this.state.loading ? "block" : "none" };
-    
-        return (
-            <div 
-                style={{
-                    width: '300px',
-                    height: '400px',
-                    overflow: 'scroll'
-                }}
-            >
-                <div style={{ minHeight: "100px" }}>
-                    {this.state.photos.map(user => (
-                        <img src={user.packageImg} height="100px" width="100px" />
-                    ))}
-                </div>
-                <div
-                    ref={loadingRef => (this.loadingRef = loadingRef)}
-                    style={loadingCSS}
-                >
-                    <span style={loadingTextCSS}>Loading...</span>
-                </div>
-            </div>
-        );
     }
+
+    return (
+        <TrendingStickerContainer onScroll={handleScroll}>
+            <div style={{ minHeight: "100px"}}>
+                {photos.map(user => (
+                    <img src={user.packageImg} height="200px" width="200px" />
+                ))}
+            </div>
+            {bottom === true ? <div> Loading ... </div> : null}
+        </TrendingStickerContainer>
+    );
 }
 
 export default TrendingStickers;

@@ -3,39 +3,71 @@ import React from 'react';
 import TrendingStickers from './components/TrendingStickers';
 import SearchStickers from './components/SearchStickers';
 import { BrowserRouter as Router, Switch, Route, Link } from 'react-router-dom';
+import styled from 'styled-components'
+
+
+
+const Header = styled.div`
+  width: 100%;
+  height: 100px;
+  overflow: hidden;
+  background-color: #202020;
+`;
+
+const HeaderLinkContainer = styled.div`
+  width: 100%; 
+  display: flex; 
+  margin-top: 40px;
+  justify-content: center;
+  a {
+    text-decoration: none;
+  }
+`;
+
+const HeaderLink = styled.a`
+  color: white;
+  font-weight: bold;
+  font-size: 20px;
+  padding: 40px;
+  &:hover {
+    color: #6a7bff;
+  }
+`;
+
 
 function App() {
-
   const [page, setPage] = React.useState('main');
 
   function Home() {
     return (
       <div>
-        Main!
+        Home
       </div>
     );
   }
 
   const pageSelect = () => {
       return (
-        <div>
-          <Link to="/">
-            <button>Main</button>
-          </Link>
-          <Link to="/search-stickers">
-            <button>Search</button>
-          </Link>
-          <Link to="/trending">
-            <button>Trending</button>
-          </Link>
-        </div>
+        <Header>
+          <HeaderLinkContainer>
+            <Link to="/">
+              <HeaderLink>Main</HeaderLink>
+            </Link>
+            <Link to="/search-stickers">
+              <HeaderLink>Search</HeaderLink>
+            </Link>
+            <Link to="/trending">
+              <HeaderLink>Trending</HeaderLink>
+            </Link>
+          </HeaderLinkContainer>
+        </Header>
       );
   }
 
   return (
     <Router>
+      {pageSelect()}
       <div>
-        {pageSelect()}
         <Switch>
           <Route path="/search-stickers">
             <SearchStickers />

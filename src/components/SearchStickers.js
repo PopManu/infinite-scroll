@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import axios from 'axios';
+import styled from 'styled-components';
 
 class TrendingStickers extends Component {
     constructor() {
@@ -17,6 +18,7 @@ class TrendingStickers extends Component {
     componentDidMount() {
         // this.getPhotos(this.state.page);
         this.querySearch(this.state.query, this.state.page)
+        console.log('Page: ', this.state.page);
 
         var options = {
           root: null,
@@ -34,6 +36,8 @@ class TrendingStickers extends Component {
     async querySearch(queryString, page) {
 
         this.setState({ loading: true });
+        console.log('Query String: ', this.state.query);
+
         let config = {
             headers: {
                 apiKey: '823bb74a52fb44f8590c87b3dfd8c4e8'
@@ -44,7 +48,7 @@ class TrendingStickers extends Component {
             await axios
                 .get(`/v1/search?userId=9937&q=${queryString}&lang=en&pageNumber=${page}&limit=10`, config)
                 .then(res => {
-                    console.log('photos: ', res.data.body.stickerList);
+                console.log('photos: ', res.data.body.stickerList);
                 if (res.data.body.stickerList !== null) {
                     this.setState({ photos:  [...this.state.photos, ...res.data.body.stickerList]});
                     this.setState({ loading: false });
@@ -120,32 +124,16 @@ class TrendingStickers extends Component {
                 }}
             >
                 {this.searchBar()}
-                { this.state.query ?
-                        <div>
-                            <div style={{ minHeight: "100px" }}>
-                                {this.state.photos && this.state.photos.map(user => (
-                                    <img src={user.stickerImg} height="100px" width="100px" />
-                                    ))}
-                            </div>
-                            <div>
-                                <div
-                                    ref={loadingRef => (this.loadingRef = loadingRef)}
-                                    style={loadingCSS}
-                                >
-                                    <span style={loadingTextCSS}>Loading...</span>
-                                </div>
-                            </div>     
-                        </div>
-                    :
-                        <div>
-                            <div
-                                ref={loadingRef => (this.loadingRef = loadingRef)}
-                                style={loadingCSS}
-                            >
-                                <span style={loadingTextCSS}>Loading...</span>
-                            </div>
-                        </div>                
-                    }
+                <div>
+                    <div style={{ minHeight: "100px" }}>
+                        {this.state.photos && this.state.photos.map(user => (
+                            <img src={user.stickerImg} height="100px" width="100px" />
+                        ))}
+                    </div>
+                    <div>
+                        <div ref={loadingRef => (this.loadingRef = loadingRef)} style={loadingCSS} />
+                    </div>                         
+                </div>
             </div>
         );
     }
