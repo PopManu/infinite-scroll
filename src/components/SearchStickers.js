@@ -2,42 +2,36 @@ import React, { Component } from 'react';
 import axios from 'axios';
 import styled from 'styled-components';
 
-class TrendingStickers extends Component {
-    constructor() {
-        super();
-        this.state = {
-            photos: [],
-            loading: false,
-            page: 1,
-            query: null,
-            search: '',
-            prevY: 0
-        }
-    }
+const SearchStickerContainer = styled.div`
+    width: 100%;
+    height: 70vh;
+    overflow: scroll;
+    position: absolute;
+    top: 20%;
+`;
 
-    componentDidMount() {
-        // this.getPhotos(this.state.page);
-        this.querySearch(this.state.query, this.state.page)
-        console.log('Page: ', this.state.page);
+const SearchLabel = styled.label`
+    font-size: 25px;
+    font-weight: bold;
+`;
 
-        var options = {
-          root: null,
-          rootMargin: "0px",
-          threshold: 1.0
-        };
-        
-        this.observer = new IntersectionObserver(
-          this.handleObserver.bind(this),
-          options
-        );
-        this.observer.observe(this.loadingRef);
-    }
+const SearchInput = styled.input`
 
-    async querySearch(queryString, page) {
+`;
 
-        this.setState({ loading: true });
-        console.log('Query String: ', this.state.query);
 
+function SearchStickers() {
+    const [photos, setPhotos] = React.useState([]);
+    const [page, setPage] = React.useState(1);
+    const [bottom, setBottom] = React.useState(false);
+    const [query, setQuery] = React.useState(null);
+    const [search, setSearch] = React.useState('');
+
+    React.useEffect(() => {
+        querySearch(null, page);
+    }, []) 
+
+    const querySearch = async (queryString, page) => {
         let config = {
             headers: {
                 apiKey: '823bb74a52fb44f8590c87b3dfd8c4e8'
@@ -46,97 +40,77 @@ class TrendingStickers extends Component {
 
         if (queryString !== null) {
             await axios
-                .get(`/v1/search?userId=9937&q=${queryString}&lang=en&pageNumber=${page}&limit=10`, config)
+                .get(`/v1/search?userId=9937&q=${queryString}&lang=en&pageNumber=${page}&limit=20`, config)
                 .then(res => {
-                console.log('photos: ', res.data.body.stickerList);
                 if (res.data.body.stickerList !== null) {
-                    this.setState({ photos:  [...this.state.photos, ...res.data.body.stickerList]});
-                    this.setState({ loading: false });
+                    setPhotos([...photos, ...res.data.body.stickerList]);
                 }
-
             });
         }
-
     }
 
-
-    getPhotos(page) {
-        this.setState({ loading: true });
+    const continueQuery = async (queryString, page) => {
         let config = {
             headers: {
                 apiKey: '823bb74a52fb44f8590c87b3dfd8c4e8'
             }
         }
 
-        axios
-          .get(`/v1/search?userId=9937&q=${this.state.query}&lang=en&pageNumber=${page}&limit=20`, config)
-          .then(res => {
-            console.log("Photos State aaaaah: ", res.data.body.stickerList);
-            this.setState({ photos: [...this.state.photos, ...res.data.body.stickerList] });
-            this.setState({ loading: false });
-          });
-      }
-
-      handleObserver(entities, observer) {
-        const y = entities[0].boundingClientRect.y;
-        if (this.state.prevY > y) {
-
-        this.querySearch(this.state.query, this.state.page + 1);
-        this.setState({ page: this.state.page + 1 });
+        if (bottom === true) {
+            setPage(page + 1);
         }
-        this.setState({ prevY: y });
-      }
 
-    searchBar = () => {
+
+        if (queryString !== null) {
+            await axios
+                .get(`/v1/search?userId=9937&q=${queryString}&lang=en&pageNumber=${page}&limit=20`, config)
+                .then(res => {
+                if (res.data.body.stickerList !== null || photos ==! null) {
+                    setPhotos([...photos, ...res.data.body.stickerList]);
+                }
+            });
+        }
+    }
+
+    const searchBar = () => {
         return (
             <form>
-                <label>
+                <SearchLabel>
                     <span>search</span>
-                </label>
+                </SearchLabel>
                 <input 
                     type="text"
                     id="search"
                     placeholder="search stickers"
-                    onChange={(e) => [this.setState({query: e.target.value}), this.querySearch(e.target.value)]}
-                    value={this.state.query}
+                    onChange={(e) => [setPhotos([]), setQuery(e.target.value), querySearch(e.target.value)]}
+                    value={query}
                 />
             </form>
         )
     }
 
-
-    render() {
-        // Additional css
-        const loadingCSS = {
-            height: "100px",
-            margin: "30px"
-        };
-    
-        // To change the loading icon behavior
-        const loadingTextCSS = { display: this.state.loading ? "block" : "none" };
-    
-        return (
-            <div
-                style={{
-                    width: '300px',
-                    height: '400px',
-                    overflow: 'scroll'
-                }}
-            >
-                {this.searchBar()}
-                <div>
-                    <div style={{ minHeight: "100px" }}>
-                        {this.state.photos && this.state.photos.map(user => (
-                            <img src={user.stickerImg} height="100px" width="100px" />
-                        ))}
-                    </div>
-                    <div>
-                        <div ref={loadingRef => (this.loadingRef = loadingRef)} style={loadingCSS} />
-                    </div>                         
-                </div>
-            </div>
-        );
+    const handleScroll = (e) => {
+        const bottom = e.target.scrollHeight - e.target.scrollTop === e.target.clientHeight;
+        setBottom(true);
+        if (bottom) {
+            continueQuery(query, page);
+            setBottom(false);
+        }
     }
+
+    return (
+        <SearchStickerContainer onScroll={handleScroll}>
+            {searchBar()}
+            <div>
+                <div style={{ minHeight: "100px" }}>
+                    {photos && photos.map(user => (
+                        <img src={user.stickerImg} height="200px" width="200px" />
+                    ))}
+                </div>        
+                {bottom === true ? <div> Loading ... </div> : null}            
+            </div>
+        </SearchStickerContainer>
+    );
 }
 
-export default TrendingStickers;
+export default SearchStickers;

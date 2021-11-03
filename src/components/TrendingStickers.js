@@ -20,7 +20,6 @@ function TrendingStickers() {
     }, []) 
 
     const getPhotos = (page) =>  {
-        console.log('nooo')
         let config = {
             headers: {
                 apiKey: '823bb74a52fb44f8590c87b3dfd8c4e8'
@@ -31,10 +30,10 @@ function TrendingStickers() {
         }
         axios
         .get(`/v1/package?userId=9937&pageNumber=${page}&lang=en&countryCode=US`, config)
-          .then(res => {
+            .then(res => {
             setPhotos([...photos, ...res.data.body.packageList]);
-          });
-      }
+        });
+    }
 
     const handleScroll = (e) => {
         const bottom = e.target.scrollHeight - e.target.scrollTop === e.target.clientHeight;
